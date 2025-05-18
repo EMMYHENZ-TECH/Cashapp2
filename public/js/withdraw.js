@@ -1,5 +1,14 @@
 // Format currency
 function formatCurrency(amount) {
+  // Check if user is admin
+  const user = JSON.parse(localStorage.getItem("user") || "{}")
+  const isAdmin = user.email === "admin@example.com" || user.email === "emmy@gmail.com"
+
+  // For admin accounts with extremely large numbers, show infinity symbol
+  if (isAdmin && amount > 999999999999) {
+    return "∞"
+  }
+
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -17,6 +26,7 @@ function initWithdrawPage() {
 
   const user = JSON.parse(userJson)
   const balance = user.balance
+  const isAdmin = user.email === "admin@example.com" || user.email === "emmy@gmail.com"
 
   // Update UI with user data
   document.getElementById("balance-amount").textContent = "$" + formatCurrency(balance)
@@ -24,9 +34,18 @@ function initWithdrawPage() {
   document.getElementById("withdraw-amount").textContent = "$" + formatCurrency(balance)
 
   // Set slider max value to balance (in cents to avoid floating point issues)
+  // For extremely large balances, cap at a reasonable maximum
   const slider = document.getElementById("amount-slider")
-  slider.max = balance * 100
-  slider.value = balance * 100
+
+  // For admin accounts, set a high but reasonable max
+  // For regular users, use their actual balance
+  const maxSliderValue = isAdmin
+    ? 1000000000 * 100
+    : // Cap at 1 billion for admin
+      Math.min(balance * 100, 1000000000 * 100) // Cap at user balance or 1 billion, whichever is smaller
+
+  slider.max = maxSliderValue
+  slider.value = maxSliderValue
 
   // Update amount when slider changes
   slider.addEventListener("input", () => {

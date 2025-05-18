@@ -1,5 +1,14 @@
 // Format currency
 function formatCurrency(amount) {
+  // Check if user is admin
+  const user = JSON.parse(localStorage.getItem("user") || "{}")
+  const isAdmin = user.email === "admin@example.com" || user.email === "emmy@gmail.com"
+
+  // For admin accounts with extremely large numbers, show infinity symbol
+  if (isAdmin && amount > 999999999999) {
+    return "∞"
+  }
+
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -8,7 +17,14 @@ function formatCurrency(amount) {
 
 // Format currency for short display (e.g. $5.6K)
 function formatShortCurrency(amount) {
-  if (amount >= 1000) {
+  // Check if user is admin
+  const user = JSON.parse(localStorage.getItem("user") || "{}")
+  const isAdmin = user.email === "admin@example.com" || user.email === "emmy@gmail.com"
+
+  // For admin accounts with extremely large numbers, show infinity symbol
+  if (isAdmin && amount > 999999999999) {
+    return "$∞" // Show infinity symbol for extremely large values
+  } else if (amount >= 1000) {
     return "$" + (amount / 1000).toFixed(1) + "K"
   }
   return "$" + amount.toFixed(0)

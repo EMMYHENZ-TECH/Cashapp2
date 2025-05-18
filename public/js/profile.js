@@ -8,13 +8,22 @@ function loadProfileData() {
   }
 
   const user = JSON.parse(userJson)
+  const isAdmin = user.email === "admin@example.com" || user.email === "emmy@gmail.com"
 
   // Update UI with user data
   document.getElementById("profile-name").textContent = user.name
   document.getElementById("profile-email").textContent = user.email
   document.getElementById("profile-account").textContent = user.accountNumber
   document.getElementById("profile-routing").textContent = user.routingNumber
-  document.getElementById("profile-balance").textContent = "$" + formatCurrency(user.balance)
+
+  // Format balance for display
+  let balanceDisplay = user.balance
+  if (isAdmin && user.balance > 999999999999) {
+    balanceDisplay = "∞"
+  } else {
+    balanceDisplay = formatCurrency(user.balance)
+  }
+  document.getElementById("profile-balance").textContent = "$" + balanceDisplay
 }
 
 // Format currency
