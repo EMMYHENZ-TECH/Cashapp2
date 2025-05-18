@@ -123,6 +123,11 @@ function generateAccountNumber() {
   return Math.floor(1000000000 + Math.random() * 9000000000).toString()
 }
 
+// Check if an account is an admin account
+function isAdminAccount(email) {
+  return email === "admin@example.com" || email === "emmy@gmail.com"
+}
+
 // Middleware to verify token
 function verifyToken(req, res, next) {
   const bearerHeader = req.headers["authorization"]
@@ -278,13 +283,21 @@ app.post("/api/transfer", verifyToken, (req, res) => {
     return res.status(404).json({ message: "Recipient not found" })
   }
 
-  // Check if sender has enough balance
-  if (sender.balance < Number.parseFloat(amount)) {
+  // Check if sender is an admin account
+  const senderIsAdmin = isAdminAccount(sender.email)
+
+  // For non-admin accounts, check if they have enough balance
+  if (!senderIsAdmin && sender.balance < Number.parseFloat(amount)) {
     return res.status(400).json({ message: "Insufficient balance" })
   }
 
   // Update balances
-  sender.balance -= Number.parseFloat(amount)
+  // For admin accounts, don't reduce their balance
+  if (!senderIsAdmin) {
+    sender.balance -= Number.parseFloat(amount)
+  }
+
+  // For all recipients, add the exact amount transferred (not infinite)
   recipient.balance += Number.parseFloat(amount)
 
   // Save users
@@ -334,13 +347,18 @@ app.post("/api/withdraw", verifyToken, (req, res) => {
     return res.status(404).json({ message: "User not found" })
   }
 
-  // Check if user has enough balance
-  if (user.balance < Number.parseFloat(amount)) {
+  // Check if user is an admin account
+  const userIsAdmin = isAdminAccount(user.email)
+
+  // For non-admin accounts, check if they have enough balance
+  if (!userIsAdmin && user.balance < Number.parseFloat(amount)) {
     return res.status(400).json({ message: "Insufficient balance" })
   }
 
-  // Update balance
-  user.balance -= Number.parseFloat(amount)
+  // Update balance - for admin accounts, don't reduce their balance
+  if (!userIsAdmin) {
+    user.balance -= Number.parseFloat(amount)
+  }
 
   // Save users
   saveUsers(users)
